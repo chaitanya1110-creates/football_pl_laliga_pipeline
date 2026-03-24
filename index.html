@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>icarus_football</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --glass: rgba(12,12,12,0.58);
+    --glass-open: rgba(10,10,10,0.82);
+    --border: rgba(255,255,255,0.08);
+    --border-h: rgba(255,255,255,0.15);
+    --text: #e4e4e4;
+    --dim: #777;
+    --muted: #444;
+    --radius: 14px;
+    --blur: 22px;
+    --ease: cubic-bezier(0.25,0.46,0.45,0.94);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    background: #050505;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Background ── */
+  .bg-img {
+    position: fixed; inset: 0; z-index: -2;
+    background: url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat fixed;
+  }
+  .bg-overlay {
+    position: fixed; inset: 0; z-index: -1;
+    background: linear-gradient(170deg,rgba(0,0,0,0.93) 0%,rgba(0,0,0,0.80) 40%,rgba(0,0,0,0.90) 100%);
+  }
+
+  /* ── Navbar ── */
+  .navbar {
+    position: sticky; top: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 58px; padding: 0 clamp(18px,5vw,54px);
+    background: rgba(6,6,6,0.65);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-left { display: flex; align-items: center; gap: 12px; }
+  .brand {
+    font-size: 0.88rem; font-weight: 600;
+    letter-spacing: 0.07em; text-transform: lowercase; color: #fff;
+  }
+  .live-indicator {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 0.6rem; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--dim);
+  }
+  .live-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #c0392b; box-shadow: 0 0 7px rgba(192,57,43,0.7);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.65)} }
+
+  .nav-tabs {
+    display: flex; gap: 2px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px; padding: 3px;
+  }
+  .nav-tab {
+    padding: 6px 20px; font-size: 0.75rem; font-weight: 500;
+    letter-spacing: 0.04em; color: var(--dim);
+    background: transparent; border: none; border-radius: 6px;
+    cursor: pointer; transition: all 0.28s var(--ease); font-family: inherit;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: #fff; background: rgba(255,255,255,0.09); }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 1280px; margin: 0 auto;
+    padding: 0 clamp(18px,5vw,54px);
+  }
+
+  .page { display: none; animation: fadeIn 0.45s var(--ease); }
+  .page.active { display: block; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── Page Header ── */
+  .page-header { padding: 52px 0 16px; }
+  .overline {
+    font-size: 0.62rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  }
+  .page-header h1 {
+    font-size: clamp(1.6rem,3.5vw,2.4rem); font-weight: 700;
+    letter-spacing: -0.03em; color: #fff; line-height: 1.1;
+  }
+  .page-header p {
+    margin-top: 8px; font-size: 0.86rem; color: var(--dim);
+    font-weight: 300; line-height: 1.5; max-width: 460px;
+  }
+
+  /* ── Stats Strip ── */
+  .stats-strip {
+    display: flex; gap: 30px; padding: 24px 0 10px; flex-wrap: wrap;
+  }
+  .stat-item { display: flex; flex-direction: column; }
+  .stat-number { font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+  .stat-label { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+  .divider { height: 1px; background: var(--border); margin: 22px 0 28px; }
+
+  /* ── Section Title ── */
+  .section-title {
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--dim); margin-bottom: 18px; font-weight: 500;
+  }
+
+  /* ── Card Grid ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 14px; margin-bottom: 54px;
+  }
+
+  /* ── Glass Card (collapsed) ── */
+  .card {
+    background: var(--glass);
+    backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+    cursor: pointer;
+    position: relative; overflow: hidden;
+    user-select: none;
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);
+  }
+  .card:hover {
+    border-color: var(--border-h);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .card.open {
+    border-color: rgba(255,255,255,0.13);
+    background: var(--glass-open);
+  }
+
+  /* card top row */
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-rank {
+    font-size: 0.65rem; font-weight: 600; color: var(--muted);
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 7px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .card-rank.top { color: var(--dim); border-color: rgba(255,255,255,0.09); }
+  .card-chevron {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.35s var(--ease);
+    color: var(--muted);
+  }
+  .card.open .card-chevron { transform: rotate(180deg); }
+  .card-chevron svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .card-initial {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--dim); margin-bottom: 14px;
+  }
+  .card-name {
+    font-size: 0.97rem; font-weight: 600; letter-spacing: -0.01em;
+    color: #fff; margin-bottom: 0; line-height: 1.2;
+  }
+
+  /* Quick stats (always visible) */
+  .card-quick {
+    display: flex; gap: 16px; margin-top: 14px;
+  }
+  .qstat { display: flex; flex-direction: column; }
+  .qstat-val { font-size: 1.05rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+  .qstat-lbl { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+  /* Expanded panel */
+  .card-expand {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.45s var(--ease), opacity 0.35s ease, margin 0.35s var(--ease);
+    opacity: 0; margin-top: 0;
+  }
+  .card.open .card-expand { max-height: 400px; opacity: 1; margin-top: 18px; }
+
+  .expand-divider { height: 1px; background: rgba(255,255,255,0.06); margin-bottom: 16px; }
+
+  .expand-grid {
+    display: grid; grid-template-columns: repeat(2,1fr); gap: 8px;
+  }
+  .expand-stat {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 9px; padding: 12px 14px;
+  }
+  .expand-stat-val { font-size: 1.3rem; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
+  .expand-stat-lbl { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+
+  .expand-bar-wrap { margin-top: 14px; }
+  .expand-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .expand-bar-track {
+    height: 3px; background: rgba(255,255,255,0.05);
+    border-radius: 2px; overflow: hidden;
+  }
+  .expand-bar-fill {
+    height: 100%; border-radius: 2px;
+    background: rgba(255,255,255,0.3);
+    transition: width 0.7s var(--ease);
+    width: 0;
+  }
+  .card.open .expand-bar-fill { width: var(--w, 0%); }
+
+  .expand-tap-hint {
+    font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-top: 14px; text-align: right;
+  }
+
+  /* ── Skeleton ── */
+  .skeleton { min-height: 160px; pointer-events: none; }
+  .skel-line {
+    height: 11px; border-radius: 6px; margin-bottom: 12px;
+    background: linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.055) 50%,rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease infinite;
+  }
+  .skel-line.a{width:40%} .skel-line.b{width:68%;height:36px} .skel-line.c{width:85%}
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  /* ── Reveal ── */
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ══════════════════════════════════════
+     MAP SECTION
+  ══════════════════════════════════════ */
+  .map-section {
+    margin-bottom: 60px;
+  }
+  .map-wrapper {
+    background: rgba(10,10,10,0.6);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px; position: relative; overflow: hidden;
+  }
+  .map-wrapper::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);
+  }
+  .map-title {
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--dim); margin-bottom: 20px; font-weight: 500;
+  }
+  .map-inner {
+    display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap;
+  }
+  .map-svg-wrap {
+    flex: 1; min-width: 260px; max-width: 520px;
+    position: relative;
+  }
+  .map-svg-wrap svg {
+    width: 100%; height: auto; display: block;
+    filter: drop-shadow(0 4px 18px rgba(0,0,0,0.6));
+  }
+  /* SVG region styles — done via JS classes */
+  .region {
+    stroke: rgba(255,255,255,0.08); stroke-width: 0.8;
+    transition: fill 0.2s ease, filter 0.2s ease;
+    cursor: pointer;
+  }
+  .region:hover { filter: brightness(1.5); stroke: rgba(255,255,255,0.25); }
+
+  .map-tooltip {
+    position: fixed; z-index: 9999;
+    background: rgba(8,8,8,0.92);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 9px; padding: 10px 14px;
+    font-size: 0.78rem; font-weight: 500; color: #fff;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.15s ease;
+    white-space: nowrap;
+  }
+  .map-tooltip.show { opacity: 1; }
+  .map-tooltip-sub { font-size: 0.62rem; color: var(--dim); margin-top: 2px; }
+
+  /* Legend */
+  .map-legend {
+    flex: 0 0 auto; min-width: 180px;
+  }
+  .legend-title {
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 12px;
+  }
+  .legend-scale {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.7rem; color: var(--dim);
+  }
+  .legend-swatch {
+    width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+  .map-leaderboard { margin-top: 22px; }
+  .map-lb-title {
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px;
+  }
+  .map-lb-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 7px;
+  }
+  .map-lb-name { font-size: 0.72rem; color: var(--text); min-width: 90px; }
+  .map-lb-bar-track { flex: 1; height: 2px; background: rgba(255,255,255,0.06); border-radius: 1px; overflow: hidden; }
+  .map-lb-bar-fill { height: 100%; border-radius: 1px; background: rgba(255,255,255,0.25); transition: width 0.8s var(--ease); }
+  .map-lb-val { font-size: 0.65rem; color: var(--muted); min-width: 28px; text-align: right; }
+
+  /* ══════════════════════════════════════
+     FOOTBALL BALL
+  ══════════════════════════════════════ */
+  #football-ball {
+    position: fixed;
+    right: 26px;
+    bottom: 30px;
+    width: 64px; height: 64px;
+    z-index: 150;
+    pointer-events: none;
+    transform: translateY(-140px);
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  #football-ball svg {
+    width: 100%; height: 100%;
+    filter: drop-shadow(0 6px 22px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+  }
+
+  /* ── Timestamp ── */
+  .timestamp {
+    text-align: center; font-size: 0.6rem; letter-spacing: 0.06em;
+    color: var(--muted); padding: 0 0 28px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; padding: 24px 20px;
+    font-size: 0.62rem; letter-spacing: 0.06em; color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  .footer a { color: var(--dim); text-decoration: none; }
+  .footer a:hover { color: var(--text); }
+
+  /* ── Responsive ── */
+  @media (max-width: 960px) { .card-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 600px) {
+    .card-grid { grid-template-columns: 1fr; }
+    .navbar { height: 50px; padding: 0 14px; }
+    .nav-tabs { display: none; }
+    .mobile-tabs { display: flex !important; gap: 2px; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 3px; margin: 18px 0 0; }
+    .mobile-tabs .nav-tab { flex: 1; text-align: center; }
+    .page-header { padding: 30px 0 12px; }
+    .expand-grid { grid-template-columns: 1fr 1fr; }
+    .map-inner { flex-direction: column; }
+    #football-ball { width: 50px; height: 50px; right: 10px; }
+  }
+  .mobile-tabs { display: none; }
+</style>
+</head>
+<body>
+
+<div class="bg-img"></div>
+<div class="bg-overlay"></div>
+
+<!-- Animated Football Ball -->
+<div id="football-ball">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="ballGrad" cx="38%" cy="35%" r="60%">
+        <stop offset="0%" stop-color="#f0f0f0"/>
+        <stop offset="45%" stop-color="#cccccc"/>
+        <stop offset="100%" stop-color="#888888"/>
+      </radialGradient>
+      <radialGradient id="shineGrad" cx="35%" cy="30%" r="40%">
+        <stop offset="0%" stop-color="rgba(255,255,255,0.55)"/>
+        <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+      </radialGradient>
+      <clipPath id="ballClip">
+        <circle cx="50" cy="50" r="47"/>
+      </clipPath>
+    </defs>
+    <!-- Base ball -->
+    <circle cx="50" cy="50" r="47" fill="url(#ballGrad)" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+    <!-- Pentagon patches -->
+    <g clip-path="url(#ballClip)" fill="rgba(20,20,20,0.82)" stroke="rgba(80,80,80,0.6)" stroke-width="0.7">
+      <!-- Center pentagon -->
+      <polygon points="50,30 62,39 57,53 43,53 38,39"/>
+      <!-- Top -->
+      <polygon points="50,5 58,14 54,25 46,25 42,14"/>
+      <!-- Top-right -->
+      <polygon points="72,18 78,30 70,38 60,33 60,20"/>
+      <!-- Right -->
+      <polygon points="88,45 90,58 78,63 70,55 74,43"/>
+      <!-- Bottom-right -->
+      <polygon points="75,72 68,82 56,78 55,66 66,60"/>
+      <!-- Bottom -->
+      <polygon points="50,88 40,82 40,70 50,65 60,70 60,82"/>
+      <!-- Bottom-left -->
+      <polygon points="25,72 22,60 32,54 44,60 43,72 34,80"/>
+      <!-- Left -->
+      <polygon points="12,45 26,43 30,55 22,63 10,58"/>
+      <!-- Top-left -->
+      <polygon points="28,18 40,20 40,33 30,38 22,30"/>
+    </g>
+    <!-- Shine highlight -->
+    <circle cx="50" cy="50" r="47" fill="url(#shineGrad)"/>
+  </svg>
+</div>
+
+<!-- Tooltip -->
+<div class="map-tooltip" id="mapTooltip">
+  <div id="tooltipName"></div>
+  <div class="map-tooltip-sub" id="tooltipSub"></div>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="nav-left">
+    <span class="brand">icarus_football</span>
+    <div class="live-indicator"><span class="live-dot"></span>live</div>
+  </div>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-page="pl">Premier League</button>
+    <button class="nav-tab" data-page="ll">La Liga</button>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="container">
+
+  <!-- Mobile Tabs -->
+  <div class="mobile-tabs" id="mobileTabs">
+    <button class="nav-tab active" data-page="pl">Premier League</button>
+    <button class="nav-tab" data-page="ll">La Liga</button>
+  </div>
+
+  <!-- ═══════ PAGE: Premier League ═══════ -->
+  <section class="page active" id="page-pl">
+    <div class="page-header reveal">
+      <div class="overline">England &middot; 2024–25 Season</div>
+      <h1>Premier League</h1>
+      <p>Top-flight performance data. Wins, draws, losses and points tracked across the full season.</p>
+    </div>
+    <div class="stats-strip reveal" id="plStats">
+      <div class="stat-item"><span class="stat-number" id="plTeams">--</span><span class="stat-label">Teams</span></div>
+      <div class="stat-item"><span class="stat-number" id="plWins">--</span><span class="stat-label">Total Wins</span></div>
+      <div class="stat-item"><span class="stat-number" id="plPoints">--</span><span class="stat-label">Total Points</span></div>
+    </div>
+    <div class="divider"></div>
+
+    <!-- Cards -->
+    <div class="section-title">Standings</div>
+    <div class="card-grid" id="plGrid">
+      <div class="card skeleton"><div class="skel-line a"></div><div class="skel-line b"></div><div class="skel-line c"></div></div>
+      <div class="card skeleton"><div class="skel-line a"></div><div class="skel-line b"></div><div class="skel-line c"></div></div>
+      <div class="card skeleton"><div class="skel-line a"></div><div class="skel-line b"></div><div class="skel-line c"></div></div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-section reveal">
+      <div class="map-wrapper">
+        <div class="map-title">Regional Distribution &mdash; England</div>
+        <div class="map-inner">
+          <div class="map-svg-wrap" id="plMapSvg"></div>
+          <div class="map-legend">
+            <div class="legend-title">Wins Range</div>
+            <div class="legend-scale" id="plLegend"></div>
+            <div class="map-leaderboard">
+              <div class="map-lb-title">Top Teams</div>
+              <div id="plLbRows"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timestamp" id="plTimestamp"></div>
+  </section>
+
+  <!-- ═══════ PAGE: La Liga ═══════ -->
+  <section class="page" id="page-ll">
+    <div class="page-header reveal">
+      <div class="overline">Spain &middot; 2024–25 Season</div>
+      <h1>La Liga</h1>
+      <p>Primera División standings. Real-time tracking of Spain's elite football clubs.</p>
+    </div>
+    <div class="stats-strip reveal" id="llStats">
+      <div class="stat-item"><span class="stat-number" id="llTeams">--</span><span class="stat-label">Teams</span></div>
+      <div class="stat-item"><span class="stat-number" id="llWins">--</span><span class="stat-label">Total Wins</span></div>
+      <div class="stat-item"><span class="stat-number" id="llPoints">--</span><span class="stat-label">Total Points</span></div>
+    </div>
+    <div class="divider"></div>
+
+    <!-- Cards -->
+    <div class="section-title">Standings</div>
+    <div class="card-grid" id="llGrid">
+      <div class="card skeleton"><div class="skel-line a"></div><div class="skel-line b"></div><div class="skel-line c"></div></div>
+      <div class="card skeleton"><div class="skel-line a"></div><div class="skel-line b"></div><div class="skel-line c"></div></div>
+      <div class="card skeleton"><div class="skel-line a"></div><div class="skel-line b"></div><div class="skel-line c"></div></div>
+    </div>
+
+    <!-- Map -->
+    <div class="map-section reveal">
+      <div class="map-wrapper">
+        <div class="map-title">Regional Distribution &mdash; Spain</div>
+        <div class="map-inner">
+          <div class="map-svg-wrap" id="llMapSvg"></div>
+          <div class="map-legend">
+            <div class="legend-title">Wins Range</div>
+            <div class="legend-scale" id="llLegend"></div>
+            <div class="map-leaderboard">
+              <div class="map-lb-title">Top Teams</div>
+              <div id="llLbRows"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timestamp" id="llTimestamp"></div>
+  </section>
+
+</div><!-- /container -->
+
+<footer class="footer">
+  icarus_football &middot; html / css / js &middot; data from <a href="https://chaitanya1110-creates.github.io/football_pl_laliga_pipeline/data/" target="_blank" rel="noopener">football_pl_laliga_pipeline</a>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ════════════════════════════════════
+     DATA
+  ════════════════════════════════════ */
+  const BASE = 'https://chaitanya1110-creates.github.io/football_pl_laliga_pipeline/data/';
+  const API = { pl: BASE + 'top_pl.json', ll: BASE + 'top_laliga.json' };
+
+  const FALLBACK = {
+    pl: [
+      { team:"Arsenal",          wins:26, points:83, draws:5,  losses:7,  gf:89, ga:29, gd:60 },
+      { team:"Manchester City",  wins:25, points:80, draws:5,  losses:8,  gf:96, ga:45, gd:51 },
+      { team:"Liverpool",        wins:24, points:79, draws:7,  losses:7,  gf:84, ga:41, gd:43 },
+      { team:"Aston Villa",      wins:20, points:68, draws:8,  losses:10, gf:76, ga:58, gd:18 },
+      { team:"Tottenham",        wins:19, points:66, draws:9,  losses:10, gf:70, ga:62, gd:8  },
+      { team:"Newcastle United", wins:18, points:63, draws:9,  losses:11, gf:85, ga:62, gd:23 },
+      { team:"Chelsea",          wins:17, points:60, draws:9,  losses:12, gf:77, ga:63, gd:14 },
+      { team:"Man United",       wins:16, points:57, draws:9,  losses:13, gf:57, ga:58, gd:-1 },
+      { team:"Brighton",         wins:15, points:55, draws:10, losses:13, gf:65, ga:62, gd:3  }
+    ],
+    ll: [
+      { team:"Real Madrid",      wins:27, points:87, draws:6,  losses:5,  gf:87, ga:26, gd:61 },
+      { team:"Barcelona",        wins:26, points:85, draws:7,  losses:5,  gf:79, ga:38, gd:41 },
+      { team:"Girona",           wins:24, points:78, draws:6,  losses:8,  gf:85, ga:46, gd:39 },
+      { team:"Atletico Madrid",  wins:22, points:73, draws:7,  losses:9,  gf:70, ga:43, gd:27 },
+      { team:"Athletic Bilbao",  wins:19, points:65, draws:8,  losses:11, gf:61, ga:40, gd:21 },
+      { team:"Real Sociedad",    wins:17, points:60, draws:9,  losses:12, gf:51, ga:45, gd:6  },
+      { team:"Real Betis",       wins:16, points:58, draws:10, losses:12, gf:48, ga:47, gd:1  },
+      { team:"Villarreal",       wins:15, points:54, draws:9,  losses:14, gf:56, ga:56, gd:0  },
+      { team:"Sevilla",          wins:14, points:51, draws:9,  losses:15, gf:44, ga:55, gd:-11}
+    ]
+  };
+
+  /* Map region → team assignment */
+  const PL_REGIONS = {
+    "Greater London":   ["Arsenal","Chelsea","Tottenham"],
+    "Manchester":       ["Manchester City","Man United"],
+    "Merseyside":       ["Liverpool"],
+    "West Midlands":    ["Aston Villa"],
+    "Tyne and Wear":    ["Newcastle United"],
+    "East Sussex":      ["Brighton"]
+  };
+  const LL_REGIONS = {
+    "Madrid":           ["Real Madrid","Atletico Madrid"],
+    "Catalonia":        ["Barcelona","Girona"],
+    "Andalusia":        ["Sevilla"],
+    "País Vasco":       ["Athletic Bilbao"],
+    "Castilla y León":  [],
+    "Galicia":          [],
+    "Valencia":         ["Villarreal"],
+    "Navarra":          ["Real Sociedad"]
+  };
+
+  /* ════════════════════════════════════
+     NORMALIZE
+  ════════════════════════════════════ */
+  function normalize(data) {
+    if (!Array.isArray(data)) data = Object.values(data);
+    return data.map(d => ({
+      team:   d.team   || d.Team   || d.name || d.club || d.Club || 'Unknown',
+      wins:   +( d.wins   ?? d.Wins   ?? d.W   ?? 0 ),
+      points: +( d.points ?? d.Points ?? d.Pts ?? d.pts ?? 0 ),
+      draws:  +( d.draws  ?? d.Draws  ?? d.D   ?? 0 ),
+      losses: +( d.losses ?? d.Losses ?? d.L   ?? 0 ),
+      gf:     +( d.gf     ?? d.GF     ?? d['goals_for']     ?? 0 ),
+      ga:     +( d.ga     ?? d.GA     ?? d['goals_against']  ?? 0 ),
+      gd:     +( d.gd     ?? d.GD     ?? d['goal_diff']      ?? 0 )
+    }));
+  }
+
+  /* ════════════════════════════════════
+     COUNT UP
+  ════════════════════════════════════ */
+  function countUp(el, target) {
+    let cur = 0;
+    const step = Math.max(1, Math.ceil(target / 40));
+    const id = setInterval(() => {
+      cur += step;
+      if (cur >= target) { cur = target; clearInterval(id); }
+      el.textContent = cur;
+    }, 25);
+  }
+
+  /* ════════════════════════════════════
+     RENDER CARD
+  ════════════════════════════════════ */
+  function renderCard(t, i, maxWins) {
+    const rankClass = i < 3 ? ' top' : '';
+    const delay     = i * 0.055;
+    const pct       = maxWins > 0 ? ((t.wins / maxWins) * 100).toFixed(1) : 0;
+    const played    = t.wins + t.draws + t.losses;
+    const winRate   = played > 0 ? ((t.wins / played) * 100).toFixed(0) : 0;
+    const gdSign    = t.gd > 0 ? '+' : '';
+
+    return `
+      <div class="card reveal" style="transition-delay:${delay}s" data-idx="${i}">
+        <div class="card-top">
+          <div class="card-rank${rankClass}">${i + 1}</div>
+          <div class="card-chevron">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="card-initial">${t.team.charAt(0)}</div>
+        <div class="card-name">${t.team}</div>
+        <div class="card-quick">
+          <div class="qstat">
+            <span class="qstat-val">${t.wins}</span>
+            <span class="qstat-lbl">Wins</span>
+          </div>
+          <div class="qstat">
+            <span class="qstat-val">${t.points}</span>
+            <span class="qstat-lbl">Pts</span>
+          </div>
+        </div>
+
+        <!-- Expanded -->
+        <div class="card-expand">
+          <div class="expand-divider"></div>
+          <div class="expand-grid">
+            <div class="expand-stat">
+              <div class="expand-stat-val">${t.draws}</div>
+              <div class="expand-stat-lbl">Draws</div>
+            </div>
+            <div class="expand-stat">
+              <div class="expand-stat-val">${t.losses}</div>
+              <div class="expand-stat-lbl">Losses</div>
+            </div>
+            <div class="expand-stat">
+              <div class="expand-stat-val">${t.gf || '—'}</div>
+              <div class="expand-stat-lbl">Goals For</div>
+            </div>
+            <div class="expand-stat">
+              <div class="expand-stat-val">${t.ga || '—'}</div>
+              <div class="expand-stat-lbl">Goals Against</div>
+            </div>
+          </div>
+          <div class="expand-bar-wrap">
+            <div class="expand-bar-label">
+              <span>Win Rate</span>
+              <span>${winRate}%</span>
+            </div>
+            <div class="expand-bar-track">
+              <div class="expand-bar-fill" style="--w:${winRate}%"></div>
+            </div>
+          </div>
+          <div class="expand-bar-wrap">
+            <div class="expand-bar-label">
+              <span>Wins vs League Top</span>
+              <span>${pct}%</span>
+            </div>
+            <div class="expand-bar-track">
+              <div class="expand-bar-fill" style="--w:${pct}%"></div>
+            </div>
+          </div>
+          <div class="expand-stat" style="margin-top:8px;display:inline-block;padding:8px 12px;">
+            <div class="expand-stat-val" style="font-size:1rem">${gdSign}${t.gd || 0}</div>
+            <div class="expand-stat-lbl">Goal Diff</div>
+          </div>
+          <div class="expand-tap-hint">tap to close</div>
+        </div>
+      </div>`;
+  }
+
+  /* card click toggle */
+  function bindCards(gridEl) {
+    gridEl.addEventListener('click', e => {
+      const card = e.target.closest('.card');
+      if (!card || card.classList.contains('skeleton')) return;
+      const wasOpen = card.classList.contains('open');
+      gridEl.querySelectorAll('.card.open').forEach(c => c.classList.remove('open'));
+      if (!wasOpen) card.classList.add('open');
+    });
+  }
+
+  /* ════════════════════════════════════
+     STATS STRIP
+  ════════════════════════════════════ */
+  function updateStrip(prefix, data) {
+    countUp(document.getElementById(prefix + 'Teams'),  data.length);
+    countUp(document.getElementById(prefix + 'Wins'),   data.reduce((s,t)=>s+t.wins,0));
+    countUp(document.getElementById(prefix + 'Points'), data.reduce((s,t)=>s+t.points,0));
+  }
+
+  /* ════════════════════════════════════
+     MAP — ENGLAND (schematic)
+  ════════════════════════════════════ */
+  function buildEnglandMap(data, svgWrap, legendEl, lbEl) {
+    // wins by region
+    const regionWins = {};
+    for (const [region, teams] of Object.entries(PL_REGIONS)) {
+      regionWins[region] = teams.reduce((s,name)=>{
+        const t = data.find(d=>d.team===name);
+        return s + (t ? t.wins : 0);
+      }, 0);
+    }
+
+    const maxW = Math.max(...Object.values(regionWins), 1);
+    const clr  = (w) => {
+      const p = w / maxW;
+      const l = Math.round(8 + p * 32);
+      return `hsl(0,0%,${l}%)`;
+    };
+
+    // Simple schematic SVG of England regions (not geographic, but readable)
+    const regions = [
+      { id:"Tyne and Wear",  d:"M 165 48 L 210 48 L 210 82 L 165 82 Z" },
+      { id:"Manchester",     d:"M 130 110 L 190 110 L 190 150 L 130 150 Z" },
+      { id:"Merseyside",     d:"M 75  110 L 128 110 L 128 150 L 75  150 Z" },
+      { id:"Greater London", d:"M 175 205 L 255 205 L 255 255 L 175 255 Z" },
+      { id:"West Midlands",  d:"M 130 165 L 195 165 L 195 200 L 130 200 Z" },
+      { id:"East Sussex",    d:"M 200 260 L 260 260 L 260 295 L 200 295 Z" },
+    ];
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg   = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '40 30 280 300');
+
+    // background outline of England (rough)
+    const outline = document.createElementNS(svgNS, 'path');
+    outline.setAttribute('d',
+      'M 200 32 C 220 30 245 40 248 62 C 252 80 235 88 230 100 C 240 108 248 118 240 132 '+
+      'C 265 138 272 158 260 170 C 270 182 268 200 255 208 C 266 225 264 252 258 265 '+
+      'C 265 278 258 298 242 300 C 228 312 200 308 185 295 C 168 300 145 295 138 280 '+
+      'C 118 278 100 260 105 245 C 90 230 88 205 100 195 C 90 178 95 155 112 150 '+
+      'C 100 140 98 118 110 108 C 102 90 108 70 125 62 C 130 45 155 30 175 32 Z'
+    );
+    outline.setAttribute('fill', 'rgba(255,255,255,0.02)');
+    outline.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+    outline.setAttribute('stroke-width', '1');
+    svg.appendChild(outline);
+
+    // Scotland/Wales placeholders
+    const grey1 = document.createElementNS(svgNS, 'rect');
+    grey1.setAttribute('x','152'); grey1.setAttribute('y','35');
+    grey1.setAttribute('width','50'); grey1.setAttribute('height','40');
+    grey1.setAttribute('rx','4');
+    grey1.setAttribute('fill','rgba(255,255,255,0.015)');
+    grey1.setAttribute('stroke','rgba(255,255,255,0.04)'); grey1.setAttribute('stroke-width','0.6');
+    svg.appendChild(grey1);
+
+    const tooltip = document.getElementById('mapTooltip');
+
+    regions.forEach(r => {
+      const w   = regionWins[r.id] || 0;
+      const el  = document.createElementNS(svgNS, 'path');
+      el.setAttribute('d', r.d);
+      el.setAttribute('fill', clr(w));
+      el.setAttribute('class', 'region');
+      el.setAttribute('stroke', 'rgba(255,255,255,0.1)');
+      el.setAttribute('stroke-width', '0.8');
+      el.setAttribute('rx', '4');
+
+      el.addEventListener('mouseenter', ev => {
+        const teams = PL_REGIONS[r.id] || [];
+        const detail = teams.length ? teams.join(', ') : 'No tracked team';
+        document.getElementById('tooltipName').textContent = r.id;
+        document.getElementById('tooltipSub').textContent  = `${w} wins · ${detail}`;
+        tooltip.classList.add('show');
+      });
+      el.addEventListener('mousemove', ev => {
+        tooltip.style.left = (ev.clientX + 14) + 'px';
+        tooltip.style.top  = (ev.clientY - 12) + 'px';
+      });
+      el.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+
+      svg.appendChild(el);
+
+      // label
+      const bbox = r.d.match(/M\s*([\d.]+)\s*([\d.]+)/);
+      if (bbox) {
+        const tx = document.createElementNS(svgNS, 'text');
+        const path_nums = r.d.match(/[\d.]+/g).map(Number);
+        const cx = (path_nums[0] + path_nums[4]) / 2;
+        const cy = (path_nums[1] + path_nums[7]) / 2;
+        tx.setAttribute('x', cx); tx.setAttribute('y', cy + 4);
+        tx.setAttribute('text-anchor','middle');
+        tx.setAttribute('fill','rgba(255,255,255,0.55)');
+        tx.setAttribute('font-size','7');
+        tx.setAttribute('font-family','Space Grotesk,sans-serif');
+        tx.setAttribute('font-weight','600');
+        tx.setAttribute('pointer-events','none');
+        tx.textContent = w > 0 ? `${w}W` : '';
+        svg.appendChild(tx);
+      }
+    });
+
+    svgWrap.appendChild(svg);
+
+    // Legend
+    const steps = [0, maxW*0.25, maxW*0.5, maxW*0.75, maxW].map(Math.round);
+    const labels = ['No data','Low','Mid','High','Top'];
+    legendEl.innerHTML = steps.map((v,i)=>`
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:${clr(v)}"></div>
+        <span>${labels[i]} ${v>0?'('+v+'W)':''}</span>
+      </div>`).join('');
+
+    // Leaderboard bars
+    const top5 = [...data].sort((a,b)=>b.wins-a.wins).slice(0,5);
+    lbEl.innerHTML = top5.map(t=>`
+      <div class="map-lb-row">
+        <div class="map-lb-name">${t.team}</div>
+        <div class="map-lb-bar-track">
+          <div class="map-lb-bar-fill" style="width:${(t.wins/top5[0].wins*100).toFixed(1)}%"></div>
+        </div>
+        <div class="map-lb-val">${t.wins}</div>
+      </div>`).join('');
+  }
+
+  /* ════════════════════════════════════
+     MAP — SPAIN (schematic)
+  ════════════════════════════════════ */
+  function buildSpainMap(data, svgWrap, legendEl, lbEl) {
+    const regionWins = {};
+    for (const [region, teams] of Object.entries(LL_REGIONS)) {
+      regionWins[region] = teams.reduce((s,name)=>{
+        const t = data.find(d=>d.team===name);
+        return s + (t ? t.wins : 0);
+      }, 0);
+    }
+    const maxW = Math.max(...Object.values(regionWins), 1);
+    const clr  = (w) => {
+      const p = w / maxW;
+      const l = Math.round(8 + p * 35);
+      return `hsl(0,0%,${l}%)`;
+    };
+
+    const regions = [
+      { id:"Galicia",         d:"M  42 110 L  88 110 L  88 160 L  42 160 Z" },
+      { id:"País Vasco",      d:"M 178 70  L 220 70  L 220 105 L 178 105 Z" },
+      { id:"Navarra",         d:"M 222 70  L 258 70  L 258 105 L 222 105 Z" },
+      { id:"Castilla y León", d:"M  88 105 L 210 105 L 210 165 L  88 165 Z" },
+      { id:"Madrid",          d:"M 175 165 L 230 165 L 230 210 L 175 210 Z" },
+      { id:"Catalonia",       d:"M 258 68  L 310 68  L 310 145 L 258 145 Z" },
+      { id:"Valencia",        d:"M 252 148 L 300 148 L 300 210 L 252 210 Z" },
+      { id:"Andalusia",       d:"M  88 210 L 255 210 L 255 275 L  88 275 Z" },
+    ];
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg   = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '30 55 295 240');
+
+    const outline = document.createElementNS(svgNS, 'path');
+    outline.setAttribute('d',
+      'M 90 60 C 125 55 175 58 220 65 C 255 60 295 65 310 85 C 318 108 308 140 305 160 '+
+      'C 310 180 305 200 295 215 C 285 240 265 270 240 280 C 210 292 175 285 150 280 '+
+      'C 115 288 85 275 68 255 C 48 232 42 200 45 175 C 38 155 40 125 50 108 C 58 85 72 65 90 60 Z'
+    );
+    outline.setAttribute('fill', 'rgba(255,255,255,0.015)');
+    outline.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+    outline.setAttribute('stroke-width', '1');
+    svg.appendChild(outline);
+
+    const tooltip = document.getElementById('mapTooltip');
+
+    regions.forEach(r => {
+      const w   = regionWins[r.id] || 0;
+      const el  = document.createElementNS(svgNS, 'path');
+      el.setAttribute('d', r.d);
+      el.setAttribute('fill', clr(w));
+      el.setAttribute('class', 'region');
+      el.setAttribute('stroke', 'rgba(255,255,255,0.1)');
+      el.setAttribute('stroke-width', '0.8');
+
+      el.addEventListener('mouseenter', ev => {
+        const teams = LL_REGIONS[r.id] || [];
+        document.getElementById('tooltipName').textContent = r.id;
+        document.getElementById('tooltipSub').textContent  = `${w} wins · ${teams.length ? teams.join(', ') : 'No tracked team'}`;
+        tooltip.classList.add('show');
+      });
+      el.addEventListener('mousemove', ev => {
+        tooltip.style.left = (ev.clientX + 14) + 'px';
+        tooltip.style.top  = (ev.clientY - 12) + 'px';
+      });
+      el.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+      svg.appendChild(el);
+
+      // label
+      const nums = r.d.match(/[\d.]+/g).map(Number);
+      const cx = (nums[0] + nums[4]) / 2;
+      const cy = (nums[1] + nums[7]) / 2;
+      const tx = document.createElementNS(svgNS, 'text');
+      tx.setAttribute('x', cx); tx.setAttribute('y', cy + 4);
+      tx.setAttribute('text-anchor','middle');
+      tx.setAttribute('fill','rgba(255,255,255,0.55)');
+      tx.setAttribute('font-size','8');
+      tx.setAttribute('font-family','Space Grotesk,sans-serif');
+      tx.setAttribute('font-weight','600');
+      tx.setAttribute('pointer-events','none');
+      tx.textContent = w > 0 ? `${w}W` : '';
+      svg.appendChild(tx);
+    });
+
+    svgWrap.appendChild(svg);
+
+    const steps = [0, maxW*0.25, maxW*0.5, maxW*0.75, maxW].map(Math.round);
+    const labels = ['No data','Low','Mid','High','Top'];
+    legendEl.innerHTML = steps.map((v,i)=>`
+      <div class="legend-item">
+        <div class="legend-swatch" style="background:${clr(v)}"></div>
+        <span>${labels[i]} ${v>0?'('+v+'W)':''}</span>
+      </div>`).join('');
+
+    const top5 = [...data].sort((a,b)=>b.wins-a.wins).slice(0,5);
+    lbEl.innerHTML = top5.map(t=>`
+      <div class="map-lb-row">
+        <div class="map-lb-name">${t.team}</div>
+        <div class="map-lb-bar-track">
+          <div class="map-lb-bar-fill" style="width:${(t.wins/top5[0].wins*100).toFixed(1)}%"></div>
+        </div>
+        <div class="map-lb-val">${t.wins}</div>
+      </div>`).join('');
+  }
+
+  /* ════════════════════════════════════
+     REVEAL OBSERVER
+  ════════════════════════════════════ */
+  function observeReveals() {
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  }
+
+  /* ════════════════════════════════════
+     NAV / TABS
+  ════════════════════════════════════ */
+  function setupTabs() {
+    const allTabs = document.querySelectorAll('.nav-tab');
+    allTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.page;
+        allTabs.forEach(t => t.classList.remove('active'));
+        document.querySelectorAll(`.nav-tab[data-page="${target}"]`).forEach(t => t.classList.add('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const page = document.getElementById('page-' + target);
+        page.classList.add('active');
+        page.querySelectorAll('.reveal').forEach(el => { el.classList.remove('visible'); void el.offsetWidth; });
+        observeReveals();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+  }
+
+  /* ════════════════════════════════════
+     FOOTBALL BALL SCROLL ANIMATION
+  ════════════════════════════════════ */
+  function setupBall() {
+    const ball     = document.getElementById('football-ball');
+    let   lastY    = window.scrollY;
+    let   dropping = false;
+    let   bouncing = false;
+    let   raf      = null;
+    let   rotation = 0;
+
+    // Physics params
+    const REST_BOTTOM = 30;   // px from bottom when resting
+    const FALL_START  = -120; // initial off-screen position (translateY)
+    const GRAVITY     = 2.2;
+    const BOUNCE_DECAY= 0.52;
+    const MIN_BOUNCE  = 8;
+
+    let velY     = 0;
+    let posY     = FALL_START; // translateY value (negative = above rest)
+    let restPosY = 0;          // 0 means sitting at REST_BOTTOM from bottom
+
+    function applyTransform() {
+      ball.style.transform = `translateY(${posY}px) rotate(${rotation}deg)`;
+    }
+
+    function dropBall() {
+      if (dropping || bouncing) return;
+      dropping = true;
+      bouncing = false;
+      ball.style.opacity = '1';
+      posY = FALL_START;
+      velY = 0;
+      cancelAnimationFrame(raf);
+      animateFall();
+    }
+
+    function animateFall() {
+      velY  += GRAVITY;
+      posY  += velY;
+      rotation += velY * 1.8;
+
+      if (posY >= restPosY) {
+        posY  = restPosY;
+        velY  = -velY * BOUNCE_DECAY;
+        rotation += 5;
+        if (Math.abs(velY) < MIN_BOUNCE) {
+          // settled
+          posY     = restPosY;
+          velY     = 0;
+          dropping = false;
+          bouncing = false;
+          applyTransform();
+          return;
+        }
+        bouncing = true;
+      }
+      applyTransform();
+      raf = requestAnimationFrame(animateFall);
+    }
+
+    // Trigger on scroll
+    let scrollThrottle = false;
+    let scrollAccum    = 0;
+    const SCROLL_THRESHOLD = 60;
+
+    window.addEventListener('scroll', () => {
+      if (scrollThrottle) return;
+      scrollThrottle = true;
+      requestAnimationFrame(() => {
+        const curY = window.scrollY;
+        const delta = Math.abs(curY - lastY);
+        scrollAccum += delta;
+        lastY = curY;
+
+        if (scrollAccum >= SCROLL_THRESHOLD) {
+          scrollAccum = 0;
+          dropBall();
+        }
+        scrollThrottle = false;
+      });
+    });
+
+    // Initial drop after a short delay
+    setTimeout(dropBall, 800);
+  }
+
+  /* ════════════════════════════════════
+     FETCH
+  ════════════════════════════════════ */
+  async function fetchJSON(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
+
+  /* ════════════════════════════════════
+     INIT
+  ════════════════════════════════════ */
+  async function init() {
+    setupTabs();
+    setupBall();
+
+    let plData, llData, fallback = false;
+
+    try {
+      const raw = await fetchJSON(API.pl);
+      plData = normalize(raw);
+      if (!plData.length) throw 0;
+    } catch { plData = FALLBACK.pl; fallback = true; }
+
+    try {
+      const raw = await fetchJSON(API.ll);
+      llData = normalize(raw);
+      if (!llData.length) throw 0;
+    } catch { llData = FALLBACK.ll; fallback = true; }
+
+    const plMax = Math.max(...plData.map(t=>t.wins));
+    const llMax = Math.max(...llData.map(t=>t.wins));
+
+    // Render cards
+    const plGrid = document.getElementById('plGrid');
+    const llGrid = document.getElementById('llGrid');
+    plGrid.innerHTML = plData.map((t,i) => renderCard(t, i, plMax)).join('');
+    llGrid.innerHTML = llData.map((t,i) => renderCard(t, i, llMax)).join('');
+
+    bindCards(plGrid);
+    bindCards(llGrid);
+
+    updateStrip('pl', plData);
+    updateStrip('ll', llData);
+
+    // Maps
+    buildEnglandMap(plData,
+      document.getElementById('plMapSvg'),
+      document.getElementById('plLegend'),
+      document.getElementById('plLbRows')
+    );
+    buildSpainMap(llData,
+      document.getElementById('llMapSvg'),
+      document.getElementById('llLegend'),
+      document.getElementById('llLbRows')
+    );
+
+    // Timestamp
+    const now = new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const sfx = fallback ? ' · cached data' : ' · live';
+    document.getElementById('plTimestamp').textContent = 'updated ' + now + sfx;
+    document.getElementById('llTimestamp').textContent = 'updated ' + now + sfx;
+
+    observeReveals();
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
