@@ -3,7 +3,7 @@
 An automated, end-to-end data engineering project that fetches, transforms, and visualizes global football data using a modern **Medallion Architecture**.
 
 ## 🚀 Live Demo
-Check out the live dashboard: [Your GitHub Pages Link Here]
+Check out the live dashboard: (https://chaitanya1110-creates.github.io/football_pl_laliga_pipeline/)
 
 ## 🏗️ Technical Architecture
 
