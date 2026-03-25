@@ -8,15 +8,35 @@
         "home_wins":12
     },
     {
-        "team":"Real Madrid CF",
+        "team":"Villarreal CF",
         "home_wins":11
     },
     {
-        "team":"Villarreal CF",
+        "team":"Real Madrid CF",
         "home_wins":11
     },
     {
         "team":"Real Betis Balompi\u00e9",
         "home_wins":7
+    },
+    {
+        "team":"CA Osasuna",
+        "home_wins":7
+    },
+    {
+        "team":"Athletic Club",
+        "home_wins":7
+    },
+    {
+        "team":"Real Sociedad de F\u00fatbol",
+        "home_wins":6
+    },
+    {
+        "team":"Valencia CF",
+        "home_wins":6
+    },
+    {
+        "team":"RCD Espanyol de Barcelona",
+        "home_wins":6
     }
 ]
