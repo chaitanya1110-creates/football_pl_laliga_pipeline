@@ -18,5 +18,25 @@
     {
         "team":"Liverpool FC",
         "home_wins":8
+    },
+    {
+        "team":"Newcastle United FC",
+        "home_wins":8
+    },
+    {
+        "team":"Fulham FC",
+        "home_wins":8
+    },
+    {
+        "team":"Brentford FC",
+        "home_wins":7
+    },
+    {
+        "team":"Sunderland AFC",
+        "home_wins":7
+    },
+    {
+        "team":"Brighton & Hove Albion FC",
+        "home_wins":6
     }
 ]
